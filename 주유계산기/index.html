@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Whiteout Survival</p>
-          <h1>주유 타이머</h1>
+          <h1>수도전 주유</h1>
         </div>
         <div class="clock">
           <span id="nowTime">--:--:--</span>
@@ -24,7 +24,7 @@
         <div class="section-head">
           <div>
             <h2>내 출발 시간</h2>
-            <p>닉네임을 고르면 출발 타이밍만 크게 보여줍니다.</p>
+            <p>닉네임 선택 후 출발 시간만 확인하세요.</p>
           </div>
           <button id="soundButton" class="ghost-button" type="button">소리 알림 켜기</button>
         </div>
@@ -42,8 +42,7 @@
       <section class="panel">
         <div class="section-head">
           <div>
-            <h2>개인 임시 집결</h2>
-            <p>내 화면에만 저장되는 빠른 계산용 집결입니다.</p>
+            <h2>내 임시 집결</h2>
           </div>
         </div>
 
@@ -57,10 +56,10 @@
             <input id="localRallyRemaining" inputmode="numeric" placeholder="5:00" required />
           </label>
           <label class="field">
-            <span>상대 행군시간</span>
+            <span>상대 집결장 행군</span>
             <input id="localEnemyMarch" inputmode="numeric" placeholder="1:30" required />
           </label>
-          <button class="primary-button" type="submit">임시 집결 추가</button>
+          <button class="primary-button" type="submit">추가</button>
         </form>
       </section>
 
@@ -70,7 +69,7 @@
       </details>
 
       <details class="panel admin-panel" id="adminDetails">
-        <summary>관리자</summary>
+        <summary>관리자: 멤버 / 상대 집결</summary>
         <div id="adminLogin" class="admin-login">
           <label class="field">
             <span>관리자 비밀번호</span>
@@ -83,7 +82,7 @@
           <div class="admin-grid">
             <section>
               <div class="section-head compact">
-                <h2>멤버 관리</h2>
+                <h2>멤버</h2>
               </div>
               <form id="memberForm" class="grid-form">
                 <input id="memberId" type="hidden" />
@@ -95,32 +94,32 @@
                   <span>행군시간</span>
                   <input id="memberMarch" class="time-input" inputmode="numeric" placeholder="01:20" required />
                 </label>
-                <button class="primary-button" type="submit">멤버 저장</button>
-                <button id="memberReset" class="ghost-button" type="button">입력 초기화</button>
+                <button class="primary-button" type="submit">저장</button>
+                <button id="memberReset" class="ghost-button" type="button">초기화</button>
               </form>
               <div id="memberAdminList" class="admin-list"></div>
             </section>
 
             <section>
               <div class="section-head compact">
-                <h2>공통 집결 관리</h2>
+                <h2>상대 집결 추가</h2>
               </div>
               <form id="sharedRallyForm" class="grid-form">
                 <input id="sharedRallyId" type="hidden" />
                 <label class="field">
                   <span>이름</span>
-                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 서문 집결" required />
+                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 북문 1번" required />
                 </label>
                 <label class="field">
                   <span>집결 남은시간</span>
                   <input id="sharedRallyRemaining" inputmode="numeric" placeholder="5:00" required />
                 </label>
                 <label class="field">
-                  <span>상대 행군시간</span>
+                  <span>상대 집결장 행군</span>
                   <input id="sharedEnemyMarch" inputmode="numeric" placeholder="1:30" required />
                 </label>
-                <button class="primary-button" type="submit">공통 집결 저장</button>
-                <button id="sharedRallyReset" class="ghost-button" type="button">입력 초기화</button>
+                <button class="primary-button" type="submit">추가/수정</button>
+                <button id="sharedRallyReset" class="ghost-button" type="button">초기화</button>
               </form>
               <div id="sharedRallyAdminList" class="admin-list"></div>
             </section>

@@ -90,7 +90,7 @@ function bindEvents() {
 
     state.localRallies.unshift({
       id: crypto.randomUUID(),
-      name: cleanName(els.localRallyName.value, "임시 집결"),
+      name: cleanName(els.localRallyName.value, "내 집결"),
       rally_remaining_seconds: rallyRemaining,
       enemy_march_seconds: enemyMarch,
       created_at: new Date().toISOString(),
@@ -147,13 +147,13 @@ function bindEvents() {
     const rallyRemaining = parseDuration(els.sharedRallyRemaining.value);
     const enemyMarch = parseDuration(els.sharedEnemyMarch.value);
     if (rallyRemaining === null || enemyMarch === null) {
-      showNotice("공통 집결 시간을 확인해주세요. 예: 5:00, 1:30");
+      showNotice("상대 집결 시간을 확인해주세요. 예: 5:00, 1:30");
       return;
     }
 
     const payload = {
       id: els.sharedRallyId.value || undefined,
-      name: cleanName(els.sharedRallyName.value, "공통 집결"),
+      name: cleanName(els.sharedRallyName.value, "상대 집결"),
       rally_remaining_seconds: rallyRemaining,
       enemy_march_seconds: enemyMarch,
     };
@@ -229,9 +229,9 @@ function renderResults() {
   const rallies = getActiveRallies();
 
   if (!selectedMember) {
-    els.myCards.innerHTML = `<p class="empty">닉네임을 선택하면 내 주유 시간이 표시됩니다.</p>`;
+    els.myCards.innerHTML = `<p class="empty">닉네임을 선택하세요.</p>`;
   } else if (!rallies.length) {
-    els.myCards.innerHTML = `<p class="empty">등록된 집결이 없습니다. 개인 임시 집결을 추가하거나 관리자가 공통 집결을 올리면 됩니다.</p>`;
+    els.myCards.innerHTML = `<p class="empty">집결을 추가하면 바로 계산됩니다.</p>`;
   } else {
     els.myCards.innerHTML = rallies.map((rally) => renderMyCard(rally, selectedMember)).join("");
   }
@@ -248,11 +248,11 @@ function renderMyCard(rally, member) {
 
   return `
     <article class="rally-card ${result.className}">
-      <h3>${escapeHtml(rally.name)}${rally.local ? " · 개인" : " · 공통"}</h3>
+      <h3>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : " · 상대 집결"}</h3>
       <div class="countdown">${escapeHtml(result.mainText)}</div>
       <div class="meta">
         <span>${escapeHtml(result.statusText)}</span>
-        <span>상대 도착 ${formatClock(result.arrivalAt)} UTC · 내 행군 ${formatDuration(member.march_seconds)}</span>
+        <span>도착 ${formatClock(result.arrivalAt)} UTC · 내 행군 ${formatDuration(member.march_seconds)}</span>
         <span>출발 시각 ${formatClock(result.departAt)} UTC</span>
       </div>
       ${deleteButton}
@@ -282,7 +282,7 @@ function renderAllTables(rallies) {
 
     return `
       <section>
-        <h2>${escapeHtml(rally.name)}${rally.local ? " · 개인" : " · 공통"}</h2>
+        <h2>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : " · 상대 집결"}</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -306,15 +306,15 @@ function renderAdminLists() {
   els.memberAdminList.innerHTML = state.members.length ? state.members.map((member) => `
     <div class="admin-row">
       <span><strong>${escapeHtml(member.name)}</strong><br>${formatDuration(member.march_seconds)}</span>
-      <button class="ghost-button" type="button" data-edit-member="${escapeHtml(member.id)}">수정</button>
+      <button class="ghost-button" type="button" data-edit-member="${escapeHtml(member.id)}">불러오기</button>
       <button class="ghost-button" type="button" data-delete-member="${escapeHtml(member.id)}">삭제</button>
     </div>
   `).join("") : `<p class="empty">등록된 멤버가 없습니다.</p>`;
 
   els.sharedRallyAdminList.innerHTML = state.sharedRallies.length ? state.sharedRallies.map((rally) => `
     <div class="admin-row">
-      <span><strong>${escapeHtml(rally.name)}</strong><br>집결 ${formatDuration(rally.rally_remaining_seconds)} + 행군 ${formatDuration(rally.enemy_march_seconds)}</span>
-      <button class="ghost-button" type="button" data-edit-rally="${escapeHtml(rally.id)}">수정</button>
+      <span><strong>${escapeHtml(rally.name)}</strong><br>집결 ${formatDuration(rally.rally_remaining_seconds)} + 상대 ${formatDuration(rally.enemy_march_seconds)}</span>
+      <button class="ghost-button" type="button" data-edit-rally="${escapeHtml(rally.id)}">불러오기</button>
       <button class="ghost-button" type="button" data-delete-rally="${escapeHtml(rally.id)}">삭제</button>
     </div>
   `).join("") : `<p class="empty">등록된 공통 집결이 없습니다.</p>`;
