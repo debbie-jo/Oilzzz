@@ -16,6 +16,7 @@ const state = {
   adminPassword: sessionStorage.getItem(storage.adminPassword) || "",
   soundEnabled: localStorage.getItem(storage.sound) === "true",
   notified: new Set(),
+  saveTimers: new Map(),
   lastError: "",
 };
 
@@ -237,7 +238,7 @@ function render() {
   renderMemberSelect();
   renderSoundButton();
   renderResults();
-  renderAdminLists();
+  if (!isEditingAdmin()) renderAdminLists();
 }
 
 function renderMemberSelect() {
@@ -269,7 +270,7 @@ function renderResults() {
     els.myCards.innerHTML = rallies.map((rally) => renderMyCard(rally, selectedMember)).join("");
   }
 
-  renderAllTables(rallies);
+  if (!isEditingAdmin()) renderAllTables(rallies);
 }
 
 function renderMyCard(rally, member) {
@@ -337,17 +338,18 @@ function renderAllTables(rallies) {
 
 function renderAdminLists() {
   els.memberAdminList.innerHTML = state.members.length ? state.members.map((member) => `
-    <div class="admin-row">
-      <span><strong>${escapeHtml(member.name)}</strong><br>${formatDuration(member.march_seconds)}</span>
-      <button class="ghost-button" type="button" data-edit-member="${escapeHtml(member.id)}">불러오기</button>
+    <div class="admin-row inline-edit-row">
+      <input aria-label="닉네임" value="${escapeHtml(member.name)}" data-member-name="${escapeHtml(member.id)}" />
+      <input aria-label="행군시간" value="${formatDuration(member.march_seconds)}" data-member-march="${escapeHtml(member.id)}" inputmode="numeric" />
       <button class="ghost-button" type="button" data-delete-member="${escapeHtml(member.id)}">삭제</button>
     </div>
   `).join("") : `<p class="empty">등록된 멤버가 없습니다.</p>`;
 
   els.sharedRallyAdminList.innerHTML = state.sharedRallies.length ? state.sharedRallies.map((rally) => `
-    <div class="admin-row">
-      <span><strong>${escapeHtml(rally.name)}</strong><br>집결 ${formatDuration(rally.rally_remaining_seconds)} + 상대 ${formatDuration(rally.enemy_march_seconds)}</span>
-      <button class="ghost-button" type="button" data-edit-rally="${escapeHtml(rally.id)}">불러오기</button>
+    <div class="admin-row inline-edit-row rally-edit-row">
+      <input aria-label="집결 이름" value="${escapeHtml(rally.name)}" data-rally-name="${escapeHtml(rally.id)}" />
+      <input aria-label="집결 남은시간" value="${formatDuration(rally.rally_remaining_seconds)}" data-rally-remaining="${escapeHtml(rally.id)}" inputmode="numeric" />
+      <input aria-label="상대 집결장 행군" value="${formatDuration(rally.enemy_march_seconds)}" data-rally-enemy="${escapeHtml(rally.id)}" inputmode="numeric" />
       <button class="ghost-button" type="button" data-delete-rally="${escapeHtml(rally.id)}">삭제</button>
     </div>
   `).join("") : `<p class="empty">등록된 공통 집결이 없습니다.</p>`;
@@ -356,13 +358,14 @@ function renderAdminLists() {
 }
 
 function bindAdminListButtons() {
-  document.querySelectorAll("[data-edit-member]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const member = state.members.find((item) => item.id === button.dataset.editMember);
-      if (!member) return;
-      els.memberId.value = member.id;
-      els.memberName.value = member.name;
-      els.memberMarch.value = formatDuration(member.march_seconds);
+  document.querySelectorAll("[data-member-name], [data-member-march]").forEach((input) => {
+    input.addEventListener("input", () => {
+      if (input.dataset.memberMarch !== undefined) input.value = input.value.replace(/[^\d:]/g, "");
+      scheduleMemberSave(input.dataset.memberName || input.dataset.memberMarch);
+    });
+    input.addEventListener("blur", () => {
+      if (input.dataset.memberMarch !== undefined) input.value = autoFormatDuration(input.value) || input.value;
+      scheduleMemberSave(input.dataset.memberName || input.dataset.memberMarch, 0);
     });
   });
 
@@ -373,14 +376,18 @@ function bindAdminListButtons() {
     });
   });
 
-  document.querySelectorAll("[data-edit-rally]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const rally = state.sharedRallies.find((item) => item.id === button.dataset.editRally);
-      if (!rally) return;
-      els.sharedRallyId.value = rally.id;
-      els.sharedRallyName.value = rally.name;
-      els.sharedRallyRemaining.value = formatDuration(rally.rally_remaining_seconds);
-      els.sharedEnemyMarch.value = formatDuration(rally.enemy_march_seconds);
+  document.querySelectorAll("[data-rally-name], [data-rally-remaining], [data-rally-enemy]").forEach((input) => {
+    input.addEventListener("input", () => {
+      if (input.dataset.rallyRemaining !== undefined || input.dataset.rallyEnemy !== undefined) {
+        input.value = input.value.replace(/[^\d:]/g, "");
+      }
+      scheduleRallySave(input.dataset.rallyName || input.dataset.rallyRemaining || input.dataset.rallyEnemy);
+    });
+    input.addEventListener("blur", () => {
+      if (input.dataset.rallyRemaining !== undefined || input.dataset.rallyEnemy !== undefined) {
+        input.value = autoFormatDuration(input.value) || input.value;
+      }
+      scheduleRallySave(input.dataset.rallyName || input.dataset.rallyRemaining || input.dataset.rallyEnemy, 0);
     });
   });
 
@@ -390,6 +397,69 @@ function bindAdminListButtons() {
       await syncAll();
     });
   });
+}
+
+function isEditingAdmin() {
+  return Boolean(document.activeElement?.closest("#adminTools"));
+}
+
+function scheduleMemberSave(id, delay = 700) {
+  clearTimeout(state.saveTimers.get(`member:${id}`));
+  state.saveTimers.set(`member:${id}`, setTimeout(async () => {
+    const nameInput = document.querySelector(`[data-member-name="${CSS.escape(id)}"]`);
+    const marchInput = document.querySelector(`[data-member-march="${CSS.escape(id)}"]`);
+    const original = state.members.find((member) => member.id === id);
+    if (!nameInput || !marchInput || !original) return;
+
+    const marchSeconds = parseDuration(marchInput.value);
+    if (marchSeconds === null) return;
+
+    await adminFetch("/api/members", {
+      method: "PUT",
+      body: JSON.stringify({
+        id,
+        name: cleanName(nameInput.value, "멤버"),
+        march_seconds: marchSeconds,
+        sort_order: original.sort_order || 0,
+      }),
+    });
+
+    original.name = cleanName(nameInput.value, "멤버");
+    original.march_seconds = marchSeconds;
+    renderMemberSelect();
+    renderResults();
+  }, delay));
+}
+
+function scheduleRallySave(id, delay = 700) {
+  clearTimeout(state.saveTimers.get(`rally:${id}`));
+  state.saveTimers.set(`rally:${id}`, setTimeout(async () => {
+    const nameInput = document.querySelector(`[data-rally-name="${CSS.escape(id)}"]`);
+    const remainingInput = document.querySelector(`[data-rally-remaining="${CSS.escape(id)}"]`);
+    const enemyInput = document.querySelector(`[data-rally-enemy="${CSS.escape(id)}"]`);
+    const original = state.sharedRallies.find((rally) => rally.id === id);
+    if (!nameInput || !remainingInput || !enemyInput || !original) return;
+
+    const rallyRemaining = parseDuration(remainingInput.value);
+    const enemyMarch = parseDuration(enemyInput.value);
+    if (rallyRemaining === null || enemyMarch === null) return;
+
+    await adminFetch("/api/rallies", {
+      method: "PUT",
+      body: JSON.stringify({
+        id,
+        name: cleanName(nameInput.value, "상대 집결"),
+        rally_remaining_seconds: rallyRemaining,
+        enemy_march_seconds: enemyMarch,
+      }),
+    });
+
+    original.name = cleanName(nameInput.value, "상대 집결");
+    original.rally_remaining_seconds = rallyRemaining;
+    original.enemy_march_seconds = enemyMarch;
+    original.created_at = new Date().toISOString();
+    renderResults();
+  }, delay));
 }
 
 async function adminFetch(url, options = {}) {

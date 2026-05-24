@@ -359,6 +359,19 @@ th {
   background: #fbfcfb;
 }
 
+.inline-edit-row {
+  grid-template-columns: minmax(120px, 1fr) minmax(90px, 120px) auto;
+}
+
+.rally-edit-row {
+  grid-template-columns: minmax(120px, 1fr) minmax(84px, 110px) minmax(84px, 110px) auto;
+}
+
+.inline-edit-row input {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
 .admin-panel .grid-form {
   grid-template-columns: minmax(130px, 1fr) minmax(110px, 0.8fr) minmax(110px, 0.8fr);
 }
