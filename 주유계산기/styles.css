@@ -302,6 +302,23 @@ details > summary {
   margin-top: 14px;
 }
 
+.rally-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.rally-table-head h2 {
+  margin-bottom: 0;
+}
+
+.copy-button {
+  min-height: 36px;
+  white-space: nowrap;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -378,6 +395,11 @@ th {
 
 .admin-panel .grid-form button {
   min-width: 92px;
+}
+
+.karel-form {
+  margin-top: 10px;
+  grid-template-columns: minmax(130px, 1fr) minmax(110px, 0.8fr) auto;
 }
 
 .admin-row strong,

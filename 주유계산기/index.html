@@ -49,7 +49,7 @@
         <form id="localRallyForm" class="grid-form">
           <label class="field">
             <span>이름</span>
-            <input id="localRallyName" autocomplete="off" placeholder="예: 북문 1번" />
+            <input id="localRallyName" autocomplete="off" placeholder="예: 데비 북문" />
           </label>
           <label class="field">
             <span>집결 남은시간</span>
@@ -88,7 +88,7 @@
                 <input id="memberId" type="hidden" />
                 <label class="field">
                   <span>닉네임</span>
-                  <input id="memberName" autocomplete="off" required />
+                  <input id="memberName" autocomplete="off" placeholder="데비" required />
                 </label>
                 <label class="field">
                   <span>행군시간</span>
@@ -111,7 +111,7 @@
                 <input id="sharedRallyId" type="hidden" />
                 <label class="field">
                   <span>이름</span>
-                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 북문 1번" required />
+                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 데비 북문" required />
                 </label>
                 <label class="field">
                   <span>집결 남은시간</span>
@@ -124,11 +124,22 @@
                 <button class="primary-button" type="submit">추가/수정</button>
                 <button id="sharedRallyReset" class="ghost-button" type="button">초기화</button>
               </form>
+              <form id="karelRallyForm" class="grid-form karel-form">
+                <label class="field">
+                  <span>카랠 이름</span>
+                  <input id="karelRallyName" autocomplete="off" placeholder="예: 데비 카랠" />
+                </label>
+                <label class="field">
+                  <span>POP 집결시간</span>
+                  <input id="karelPopTime" class="time-input" inputmode="numeric" placeholder="05:00" required />
+                </label>
+                <button class="primary-button" type="submit">카랠 추가</button>
+              </form>
               <details class="bulk-box">
                 <summary>여러 집결 한번에 추가</summary>
                 <label class="field">
                   <span>한 줄에 하나씩: 이름 집결시간 상대행군</span>
-                  <textarea id="bulkRallies" rows="5" placeholder="북문1 5:00 1:30&#10;서문2 5:00 2:10"></textarea>
+                  <textarea id="bulkRallies" rows="5" placeholder="데비북문 5:00 1:30&#10;데비서문 5:00 2:10"></textarea>
                 </label>
                 <button id="bulkRallyAdd" class="primary-button" type="button">한번에 추가</button>
               </details>
