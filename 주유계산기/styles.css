@@ -137,7 +137,8 @@ p {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--line);
@@ -148,9 +149,14 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(15, 118, 110, 0.15);
+}
+
+textarea {
+  resize: vertical;
 }
 
 button {
@@ -174,6 +180,35 @@ button {
 .ghost-button {
   background: #eef3f0;
   color: var(--ink);
+}
+
+.danger-button {
+  background: #f1e9e7;
+  color: #9f1d1d;
+}
+
+.quick-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin: -2px 0 10px;
+}
+
+.bulk-box {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #fbfcfb;
+}
+
+.bulk-box summary {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.bulk-box .primary-button {
+  margin-top: 10px;
+  width: 100%;
 }
 
 .small-button {

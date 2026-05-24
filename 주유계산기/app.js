@@ -47,6 +47,9 @@ const els = {
   sharedRallyRemaining: document.querySelector("#sharedRallyRemaining"),
   sharedEnemyMarch: document.querySelector("#sharedEnemyMarch"),
   sharedRallyReset: document.querySelector("#sharedRallyReset"),
+  bulkRallies: document.querySelector("#bulkRallies"),
+  bulkRallyAdd: document.querySelector("#bulkRallyAdd"),
+  clearSharedRallies: document.querySelector("#clearSharedRallies"),
   sharedRallyAdminList: document.querySelector("#sharedRallyAdminList"),
 };
 
@@ -164,9 +167,39 @@ function bindEvents() {
     });
     resetSharedRallyForm();
     await syncAll();
+    els.sharedRallyName.focus();
   });
 
   els.sharedRallyReset.addEventListener("click", resetSharedRallyForm);
+
+  els.bulkRallyAdd.addEventListener("click", async () => {
+    const rallies = parseBulkRallies(els.bulkRallies.value);
+    if (!rallies.length) {
+      showNotice("여러 집결 입력을 확인해주세요. 예: 북문1 5:00 1:30");
+      return;
+    }
+
+    for (const rally of rallies) {
+      await adminFetch("/api/rallies", {
+        method: "POST",
+        body: JSON.stringify(rally),
+      });
+    }
+    els.bulkRallies.value = "";
+    await syncAll();
+  });
+
+  els.clearSharedRallies.addEventListener("click", async () => {
+    if (!state.sharedRallies.length) return;
+    const ok = window.confirm("상대 집결을 전부 삭제할까요?");
+    if (!ok) return;
+
+    for (const rally of state.sharedRallies) {
+      await adminFetch(`/api/rallies?id=${encodeURIComponent(rally.id)}`, { method: "DELETE" });
+    }
+    resetSharedRallyForm();
+    await syncAll();
+  });
 }
 
 function tick() {
@@ -544,6 +577,29 @@ function autoFormatDuration(value) {
     return `${Number(padded.slice(0, 2))}:${pad(Number(padded.slice(2)))}`;
   }
   return `${Number(padded.slice(0, 2))}:${pad(Number(padded.slice(2, 4)))}:${pad(Number(padded.slice(4)))}`;
+}
+
+function parseBulkRallies(value) {
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(/\s+/);
+      if (parts.length < 3) return null;
+      const enemyMarchText = parts.pop();
+      const rallyRemainingText = parts.pop();
+      const name = parts.join(" ");
+      const rallyRemaining = parseDuration(rallyRemainingText);
+      const enemyMarch = parseDuration(enemyMarchText);
+      if (!name || rallyRemaining === null || enemyMarch === null) return null;
+      return {
+        name,
+        rally_remaining_seconds: rallyRemaining,
+        enemy_march_seconds: enemyMarch,
+      };
+    })
+    .filter(Boolean);
 }
 
 function getNextSortOrder() {

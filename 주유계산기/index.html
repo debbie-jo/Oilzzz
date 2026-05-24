@@ -104,6 +104,9 @@
               <div class="section-head compact">
                 <h2>상대 집결 추가</h2>
               </div>
+              <div class="quick-tools">
+                <button id="clearSharedRallies" class="danger-button" type="button">상대 집결 전체 삭제</button>
+              </div>
               <form id="sharedRallyForm" class="grid-form">
                 <input id="sharedRallyId" type="hidden" />
                 <label class="field">
@@ -121,6 +124,14 @@
                 <button class="primary-button" type="submit">추가/수정</button>
                 <button id="sharedRallyReset" class="ghost-button" type="button">초기화</button>
               </form>
+              <details class="bulk-box">
+                <summary>여러 집결 한번에 추가</summary>
+                <label class="field">
+                  <span>한 줄에 하나씩: 이름 집결시간 상대행군</span>
+                  <textarea id="bulkRallies" rows="5" placeholder="북문1 5:00 1:30&#10;서문2 5:00 2:10"></textarea>
+                </label>
+                <button id="bulkRallyAdd" class="primary-button" type="button">한번에 추가</button>
+              </details>
               <div id="sharedRallyAdminList" class="admin-list"></div>
             </section>
           </div>
