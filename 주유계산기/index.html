@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Whiteout Survival</p>
-          <h1>수도전 주유 시간 계산기</h1>
+          <h1>주유 타이머</h1>
         </div>
         <div class="clock">
           <span id="nowTime">--:--:--</span>
@@ -24,7 +24,7 @@
         <div class="section-head">
           <div>
             <h2>내 출발 시간</h2>
-            <p>닉네임을 고르면 집결별 주유 타이밍이 크게 표시돼요.</p>
+            <p>닉네임을 고르면 출발 타이밍만 크게 보여줍니다.</p>
           </div>
           <button id="soundButton" class="ghost-button" type="button">소리 알림 켜기</button>
         </div>
@@ -93,11 +93,7 @@
                 </label>
                 <label class="field">
                   <span>행군시간</span>
-                  <input id="memberMarch" inputmode="numeric" placeholder="1:20" required />
-                </label>
-                <label class="field">
-                  <span>정렬</span>
-                  <input id="memberSort" inputmode="numeric" placeholder="0" />
+                  <input id="memberMarch" class="time-input" inputmode="numeric" placeholder="01:20" required />
                 </label>
                 <button class="primary-button" type="submit">멤버 저장</button>
                 <button id="memberReset" class="ghost-button" type="button">입력 초기화</button>

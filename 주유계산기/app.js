@@ -39,7 +39,6 @@ const els = {
   memberId: document.querySelector("#memberId"),
   memberName: document.querySelector("#memberName"),
   memberMarch: document.querySelector("#memberMarch"),
-  memberSort: document.querySelector("#memberSort"),
   memberReset: document.querySelector("#memberReset"),
   memberAdminList: document.querySelector("#memberAdminList"),
   sharedRallyForm: document.querySelector("#sharedRallyForm"),
@@ -59,6 +58,7 @@ function init() {
   els.adminLogin.hidden = Boolean(state.adminPassword);
 
   bindEvents();
+  bindTimeInputs();
   syncAll();
   render();
   setInterval(tick, 1000);
@@ -129,7 +129,7 @@ function bindEvents() {
       id: els.memberId.value || undefined,
       name: cleanName(els.memberName.value, "멤버"),
       march_seconds: marchSeconds,
-      sort_order: Number(els.memberSort.value || 0),
+      sort_order: getNextSortOrder(),
     };
 
     await adminFetch("/api/members", {
@@ -305,7 +305,7 @@ function renderAllTables(rallies) {
 function renderAdminLists() {
   els.memberAdminList.innerHTML = state.members.length ? state.members.map((member) => `
     <div class="admin-row">
-      <span><strong>${escapeHtml(member.name)}</strong><br>${formatDuration(member.march_seconds)} · 정렬 ${member.sort_order}</span>
+      <span><strong>${escapeHtml(member.name)}</strong><br>${formatDuration(member.march_seconds)}</span>
       <button class="ghost-button" type="button" data-edit-member="${escapeHtml(member.id)}">수정</button>
       <button class="ghost-button" type="button" data-delete-member="${escapeHtml(member.id)}">삭제</button>
     </div>
@@ -330,7 +330,6 @@ function bindAdminListButtons() {
       els.memberId.value = member.id;
       els.memberName.value = member.name;
       els.memberMarch.value = formatDuration(member.march_seconds);
-      els.memberSort.value = member.sort_order;
     });
   });
 
@@ -418,14 +417,15 @@ function calculateTiming(rally, member) {
 }
 
 function maybeNotify(rally, member, result) {
-  if (!state.soundEnabled || result.secondsUntilDepart < 0 || result.secondsUntilDepart > SOON_SECONDS) return;
+  if (!state.soundEnabled || result.secondsUntilDepart < 0 || result.secondsUntilDepart > 5) return;
   const key = `${rally.id}:${member.id}`;
-  if (state.notified.has(key)) return;
-  state.notified.add(key);
-  beep(0.2);
+  const tickKey = `${key}:${result.secondsUntilDepart}`;
+  if (state.notified.has(tickKey)) return;
+  state.notified.add(tickKey);
+  speakCountdown(result.secondsUntilDepart);
 }
 
-function beep(duration = 0.12) {
+function beep(duration = 0.1) {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return;
   const ctx = new AudioContext();
@@ -438,6 +438,20 @@ function beep(duration = 0.12) {
   gain.connect(ctx.destination);
   oscillator.start();
   oscillator.stop(ctx.currentTime + duration);
+}
+
+function speakCountdown(seconds) {
+  if ("speechSynthesis" in window && seconds > 0) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(String(seconds));
+    utterance.lang = "ko-KR";
+    utterance.rate = 1.1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+    return;
+  }
+
+  beep(0.14);
 }
 
 function getActiveRallies() {
@@ -456,6 +470,13 @@ function getActiveRallies() {
 function parseDuration(value) {
   const text = String(value || "").trim();
   if (!text) return null;
+  if (/^\d{3,6}$/.test(text)) {
+    const padded = text.padStart(text.length <= 4 ? 4 : 6, "0");
+    if (padded.length === 4) {
+      return Number(padded.slice(0, 2)) * 60 + Number(padded.slice(2));
+    }
+    return Number(padded.slice(0, 2)) * 3600 + Number(padded.slice(2, 4)) * 60 + Number(padded.slice(4));
+  }
   if (/^\d+$/.test(text)) return Number(text);
 
   const parts = text.split(":").map((part) => part.trim());
@@ -492,6 +513,44 @@ function cleanName(value, fallback) {
 function resetMemberForm() {
   els.memberId.value = "";
   els.memberForm.reset();
+}
+
+function bindTimeInputs() {
+  document.querySelectorAll(".time-input, #localRallyRemaining, #localEnemyMarch, #memberMarch, #sharedRallyRemaining, #sharedEnemyMarch").forEach((input) => {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/[^\d:]/g, "");
+    });
+
+    input.addEventListener("blur", () => {
+      const formatted = autoFormatDuration(input.value);
+      if (formatted) input.value = formatted;
+    });
+  });
+}
+
+function autoFormatDuration(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (text.includes(":")) {
+    const seconds = parseDuration(text);
+    return seconds === null ? text : formatDuration(seconds);
+  }
+
+  if (!/^\d+$/.test(text)) return text;
+  if (text.length <= 2) return formatDuration(Number(text));
+
+  const padded = text.padStart(text.length <= 4 ? 4 : 6, "0");
+  if (padded.length === 4) {
+    return `${Number(padded.slice(0, 2))}:${pad(Number(padded.slice(2)))}`;
+  }
+  return `${Number(padded.slice(0, 2))}:${pad(Number(padded.slice(2, 4)))}:${pad(Number(padded.slice(4)))}`;
+}
+
+function getNextSortOrder() {
+  const currentId = els.memberId.value;
+  const existing = state.members.find((member) => member.id === currentId);
+  if (existing) return existing.sort_order || 0;
+  return state.members.length ? Math.max(...state.members.map((member) => member.sort_order || 0)) + 1 : 0;
 }
 
 function resetSharedRallyForm() {
