@@ -1,0 +1,12 @@
+{
+  "name": "wos-fuel-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "check": "node --check api/members.js && node --check api/rallies.js && node --check api/_lib/supabase.js",
+    "start": "npx vercel dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

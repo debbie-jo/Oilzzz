@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>수도전 주유 시간 계산기</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Whiteout Survival</p>
+          <h1>수도전 주유 시간 계산기</h1>
+        </div>
+        <div class="clock">
+          <span id="nowTime">--:--:--</span>
+          <small>UTC 기준</small>
+          <small id="syncStatus">동기화 대기</small>
+        </div>
+      </header>
+
+      <section class="panel focus-panel">
+        <div class="section-head">
+          <div>
+            <h2>내 출발 시간</h2>
+            <p>닉네임을 고르면 집결별 주유 타이밍이 크게 표시돼요.</p>
+          </div>
+          <button id="soundButton" class="ghost-button" type="button">소리 알림 켜기</button>
+        </div>
+
+        <label class="field">
+          <span>내 닉네임</span>
+          <select id="memberSelect">
+            <option value="">멤버 불러오는 중...</option>
+          </select>
+        </label>
+
+        <div id="myCards" class="my-cards"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>개인 임시 집결</h2>
+            <p>내 화면에만 저장되는 빠른 계산용 집결입니다.</p>
+          </div>
+        </div>
+
+        <form id="localRallyForm" class="grid-form">
+          <label class="field">
+            <span>이름</span>
+            <input id="localRallyName" autocomplete="off" placeholder="예: 북문 1번" />
+          </label>
+          <label class="field">
+            <span>집결 남은시간</span>
+            <input id="localRallyRemaining" inputmode="numeric" placeholder="5:00" required />
+          </label>
+          <label class="field">
+            <span>상대 행군시간</span>
+            <input id="localEnemyMarch" inputmode="numeric" placeholder="1:30" required />
+          </label>
+          <button class="primary-button" type="submit">임시 집결 추가</button>
+        </form>
+      </section>
+
+      <details class="panel">
+        <summary>전체 명단 출발표</summary>
+        <div id="allTables" class="table-stack"></div>
+      </details>
+
+      <details class="panel admin-panel" id="adminDetails">
+        <summary>관리자</summary>
+        <div id="adminLogin" class="admin-login">
+          <label class="field">
+            <span>관리자 비밀번호</span>
+            <input id="adminPassword" type="password" autocomplete="current-password" />
+          </label>
+          <button id="adminLoginButton" class="primary-button" type="button">관리 시작</button>
+        </div>
+
+        <div id="adminTools" class="admin-tools" hidden>
+          <div class="admin-grid">
+            <section>
+              <div class="section-head compact">
+                <h2>멤버 관리</h2>
+              </div>
+              <form id="memberForm" class="grid-form">
+                <input id="memberId" type="hidden" />
+                <label class="field">
+                  <span>닉네임</span>
+                  <input id="memberName" autocomplete="off" required />
+                </label>
+                <label class="field">
+                  <span>행군시간</span>
+                  <input id="memberMarch" inputmode="numeric" placeholder="1:20" required />
+                </label>
+                <label class="field">
+                  <span>정렬</span>
+                  <input id="memberSort" inputmode="numeric" placeholder="0" />
+                </label>
+                <button class="primary-button" type="submit">멤버 저장</button>
+                <button id="memberReset" class="ghost-button" type="button">입력 초기화</button>
+              </form>
+              <div id="memberAdminList" class="admin-list"></div>
+            </section>
+
+            <section>
+              <div class="section-head compact">
+                <h2>공통 집결 관리</h2>
+              </div>
+              <form id="sharedRallyForm" class="grid-form">
+                <input id="sharedRallyId" type="hidden" />
+                <label class="field">
+                  <span>이름</span>
+                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 서문 집결" required />
+                </label>
+                <label class="field">
+                  <span>집결 남은시간</span>
+                  <input id="sharedRallyRemaining" inputmode="numeric" placeholder="5:00" required />
+                </label>
+                <label class="field">
+                  <span>상대 행군시간</span>
+                  <input id="sharedEnemyMarch" inputmode="numeric" placeholder="1:30" required />
+                </label>
+                <button class="primary-button" type="submit">공통 집결 저장</button>
+                <button id="sharedRallyReset" class="ghost-button" type="button">입력 초기화</button>
+              </form>
+              <div id="sharedRallyAdminList" class="admin-list"></div>
+            </section>
+          </div>
+        </div>
+      </details>
+
+      <section id="setupNotice" class="notice" hidden></section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
