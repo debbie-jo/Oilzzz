@@ -50,6 +50,7 @@ const els = {
   karelRallyForm: document.querySelector("#karelRallyForm"),
   karelRallyName: document.querySelector("#karelRallyName"),
   karelPopTime: document.querySelector("#karelPopTime"),
+  karelPopMarch: document.querySelector("#karelPopMarch"),
   bulkRallies: document.querySelector("#bulkRallies"),
   bulkRallyAdd: document.querySelector("#bulkRallyAdd"),
   clearSharedRallies: document.querySelector("#clearSharedRallies"),
@@ -161,14 +162,14 @@ function bindEvents() {
     const rallyRemaining = parseDuration(els.sharedRallyRemaining.value);
     const enemyMarch = parseDuration(els.sharedEnemyMarch.value);
     if (rallyRemaining === null || enemyMarch === null) {
-      showNotice("상대 집결 시간을 확인해주세요. 예: 5:00, 1:30");
+      showNotice("솔라 집결 시간을 확인해주세요. 예: 5:00, 1:30");
       return;
     }
     await adminFetch("/api/rallies", {
       method: els.sharedRallyId.value ? "PUT" : "POST",
       body: JSON.stringify({
         id: els.sharedRallyId.value || undefined,
-        name: cleanName(els.sharedRallyName.value, "데비 집결"),
+        name: withTypePrefix(cleanName(els.sharedRallyName.value, "데비 솔라"), "솔라"),
         rally_remaining_seconds: rallyRemaining,
         enemy_march_seconds: enemyMarch,
       }),
@@ -184,16 +185,17 @@ function bindEvents() {
   els.karelRallyForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const popSeconds = parseDuration(els.karelPopTime.value);
-    if (popSeconds === null) {
-      showNotice("카랠 POP 집결시간을 확인해주세요. 예: 5:00");
+    const popMarchSeconds = parseDuration(els.karelPopMarch.value);
+    if (popSeconds === null || popMarchSeconds === null) {
+      showNotice("카랠 POP 집결시간과 POP 행군시간을 확인해주세요. 예: 5:00, 1:30");
       return;
     }
     await adminFetch("/api/rallies", {
       method: "POST",
       body: JSON.stringify({
-        name: cleanName(els.karelRallyName.value, "데비 카랠"),
+        name: withTypePrefix(cleanName(els.karelRallyName.value, "데비 카랠"), "카랠"),
         rally_remaining_seconds: popSeconds,
-        enemy_march_seconds: 10,
+        enemy_march_seconds: popMarchSeconds + 10,
       }),
     });
     resetKarelRallyForm();
@@ -205,7 +207,7 @@ function bindEvents() {
   els.bulkRallyAdd.addEventListener("click", async () => {
     const rallies = parseBulkRallies(els.bulkRallies.value);
     if (!rallies.length) {
-      showNotice("여러 집결 입력을 확인해주세요. 예: 데비북문 5:00 1:30");
+      showNotice("여러 집결 입력을 확인해주세요. 예: 데비솔라 5:00 1:30");
       return;
     }
     for (const rally of rallies) {
@@ -218,7 +220,7 @@ function bindEvents() {
 
   els.clearSharedRallies.addEventListener("click", async () => {
     if (!state.sharedRallies.length) return;
-    if (!window.confirm("상대 집결을 전부 삭제할까요?")) return;
+    if (!window.confirm("집결을 전부 삭제할까요?")) return;
     for (const rally of state.sharedRallies) {
       await adminFetch(`/api/rallies?id=${encodeURIComponent(rally.id)}`, { method: "DELETE" });
     }
@@ -296,7 +298,7 @@ function renderMyCard(rally, member) {
     : "";
   return `
     <article class="rally-card ${result.className}">
-      <h3>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : " · 상대 집결"}</h3>
+      <h3>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : ""}</h3>
       <div class="countdown">${escapeHtml(result.mainText)}</div>
       <div class="meta">
         <span>${escapeHtml(result.statusText)}</span>
@@ -325,7 +327,7 @@ function renderAllTables(rallies) {
     }).join("");
     return `<section>
       <div class="rally-table-head">
-        <h2>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : " · 상대 집결"}</h2>
+        <h2>${escapeHtml(rally.name)}${rally.local ? " · 내 집결" : ""}</h2>
         <button class="ghost-button copy-button" type="button" data-copy-rally="${escapeHtml(rally.id)}">연맹 채팅 복사</button>
       </div>
       <div class="table-wrap">
@@ -350,9 +352,9 @@ function renderAdminLists() {
     <div class="admin-row inline-edit-row rally-edit-row">
       <input aria-label="집결 이름" value="${escapeHtml(rally.name)}" data-rally-name="${escapeHtml(rally.id)}" />
       <input aria-label="집결 남은시간" value="${formatDuration(rally.rally_remaining_seconds)}" data-rally-remaining="${escapeHtml(rally.id)}" inputmode="numeric" />
-      <input aria-label="상대 집결장 행군" value="${formatDuration(rally.enemy_march_seconds)}" data-rally-enemy="${escapeHtml(rally.id)}" inputmode="numeric" />
+      <input aria-label="행군시간" value="${formatDuration(rally.enemy_march_seconds)}" data-rally-enemy="${escapeHtml(rally.id)}" inputmode="numeric" />
       <button class="ghost-button" type="button" data-delete-rally="${escapeHtml(rally.id)}">삭제</button>
-    </div>`).join("") : `<p class="empty">등록된 상대 집결이 없습니다.</p>`;
+    </div>`).join("") : `<p class="empty">등록된 집결이 없습니다.</p>`;
   bindAdminListButtons();
 }
 
@@ -579,8 +581,13 @@ function cleanName(value, fallback) {
   return String(value || "").trim() || fallback;
 }
 
+function withTypePrefix(name, type) {
+  const clean = name.replace(/^\[(솔라|카랠)\]\s*/, "");
+  return `[${type}] ${clean}`;
+}
+
 function bindTimeInputs() {
-  document.querySelectorAll(".time-input, #localRallyRemaining, #localEnemyMarch, #memberMarch, #sharedRallyRemaining, #sharedEnemyMarch, #karelPopTime").forEach((input) => {
+  document.querySelectorAll(".time-input, #localRallyRemaining, #localEnemyMarch, #memberMarch, #sharedRallyRemaining, #sharedEnemyMarch, #karelPopTime, #karelPopMarch").forEach((input) => {
     input.addEventListener("input", () => {
       input.value = input.value.replace(/[^\d:]/g, "");
     });
@@ -615,7 +622,7 @@ function parseBulkRallies(value) {
       if (parts.length < 3) return null;
       const enemyMarchText = parts.pop();
       const rallyRemainingText = parts.pop();
-      const name = parts.join(" ");
+      const name = withTypePrefix(parts.join(" "), "솔라");
       const rallyRemaining = parseDuration(rallyRemainingText);
       const enemyMarch = parseDuration(enemyMarchText);
       if (!name || rallyRemaining === null || enemyMarch === null) return null;
@@ -625,20 +632,17 @@ function parseBulkRallies(value) {
 }
 
 function buildRallyCopyText(rally) {
-  const lines = [`[${rally.name}] 출발시간`];
+  const lines = [`[${rally.name}] 출발시간 UTC`];
   state.members.forEach((member) => {
     const result = calculateTiming(rally, member);
-    lines.push(`${member.name} ${formatChatDuration(result.secondsUntilDepart)}`);
+    lines.push(`${member.name} ${formatDepartureForChat(result)}`);
   });
   return lines.join("\n");
 }
 
-function formatChatDuration(seconds) {
-  if (seconds < 0) return "이미 출발";
-  const total = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(total / 60);
-  const rest = total % 60;
-  return `${minutes}분${rest.toString().padStart(2, "0")}초`;
+function formatDepartureForChat(result) {
+  if (result.secondsUntilDepart < 0) return "이미 출발";
+  return `${formatClock(result.departAt)} UTC`;
 }
 
 async function copyText(text) {
@@ -679,6 +683,7 @@ function resetSharedRallyForm() {
 function resetKarelRallyForm() {
   els.karelRallyName.value = "";
   els.karelPopTime.value = "";
+  els.karelPopMarch.value = "";
 }
 
 function readLocalRallies() {

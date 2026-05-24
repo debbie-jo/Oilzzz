@@ -69,7 +69,7 @@
       </details>
 
       <details class="panel admin-panel" id="adminDetails">
-        <summary>관리자: 멤버 / 상대 집결</summary>
+        <summary>관리자: 멤버 / 솔라 / 카랠</summary>
         <div id="adminLogin" class="admin-login">
           <label class="field">
             <span>관리자 비밀번호</span>
@@ -102,16 +102,16 @@
 
             <section>
               <div class="section-head compact">
-                <h2>상대 집결 추가</h2>
+                <h2>솔라 집결 추가</h2>
               </div>
               <div class="quick-tools">
-                <button id="clearSharedRallies" class="danger-button" type="button">상대 집결 전체 삭제</button>
+                <button id="clearSharedRallies" class="danger-button" type="button">집결 전체 삭제</button>
               </div>
               <form id="sharedRallyForm" class="grid-form">
                 <input id="sharedRallyId" type="hidden" />
                 <label class="field">
                   <span>이름</span>
-                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 데비 북문" required />
+                  <input id="sharedRallyName" autocomplete="off" placeholder="예: 데비 솔라" required />
                 </label>
                 <label class="field">
                   <span>집결 남은시간</span>
@@ -132,6 +132,10 @@
                 <label class="field">
                   <span>POP 집결시간</span>
                   <input id="karelPopTime" class="time-input" inputmode="numeric" placeholder="05:00" required />
+                </label>
+                <label class="field">
+                  <span>POP 행군시간</span>
+                  <input id="karelPopMarch" class="time-input" inputmode="numeric" placeholder="01:30" required />
                 </label>
                 <button class="primary-button" type="submit">카랠 추가</button>
               </form>
