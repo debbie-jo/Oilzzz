@@ -549,19 +549,27 @@ function getSortedRallies(rallies) {
 
 function compareRallyDisplayOrder(a, b) {
   if (a.local !== b.local) return a.local ? 1 : -1;
+  const durationDiff = getRallyDurationSeconds(a) - getRallyDurationSeconds(b);
+  if (durationDiff === 0) return compareRallyNameOrder(a, b);
+  const arrivalDiff = getRallyArrivalTime(a) - getRallyArrivalTime(b);
+  if (arrivalDiff !== 0) return arrivalDiff;
+  return compareRallyNameOrder(a, b);
+}
+
+function compareRallyNameOrder(a, b) {
   const aOrder = getRallyNameOrder(a.name);
   const bOrder = getRallyNameOrder(b.name);
   if (aOrder !== null && bOrder !== null && aOrder !== bOrder) return aOrder - bOrder;
   if (aOrder !== null && bOrder === null) return -1;
   if (aOrder === null && bOrder !== null) return 1;
-  const nameDiff = String(a.name || "").localeCompare(String(b.name || ""), "ko-KR", {
+  return String(a.name || "").localeCompare(String(b.name || ""), "ko-KR", {
     numeric: true,
     sensitivity: "base",
   });
-  if (nameDiff !== 0) return nameDiff;
-  const arrivalDiff = getRallyArrivalTime(a) - getRallyArrivalTime(b);
-  if (arrivalDiff !== 0) return arrivalDiff;
-  return b.enemy_march_seconds - a.enemy_march_seconds;
+}
+
+function getRallyDurationSeconds(rally) {
+  return rally.rally_remaining_seconds + rally.enemy_march_seconds;
 }
 
 function getRallyNameOrder(name) {
