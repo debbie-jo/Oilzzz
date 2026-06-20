@@ -549,8 +549,8 @@ function getSortedRallies(rallies) {
 
 function compareRallyDisplayOrder(a, b) {
   if (a.local !== b.local) return a.local ? 1 : -1;
-  const durationDiff = getRallyDurationSeconds(a) - getRallyDurationSeconds(b);
-  if (durationDiff === 0) return compareRallyNameOrder(a, b);
+  const remainingDiff = a.rally_remaining_seconds - b.rally_remaining_seconds;
+  if (remainingDiff === 0) return compareRallyNameOrder(a, b);
   const arrivalDiff = getRallyArrivalTime(a) - getRallyArrivalTime(b);
   if (arrivalDiff !== 0) return arrivalDiff;
   return compareRallyNameOrder(a, b);
@@ -566,10 +566,6 @@ function compareRallyNameOrder(a, b) {
     numeric: true,
     sensitivity: "base",
   });
-}
-
-function getRallyDurationSeconds(rally) {
-  return rally.rally_remaining_seconds + rally.enemy_march_seconds;
 }
 
 function getRallyNameOrder(name) {
