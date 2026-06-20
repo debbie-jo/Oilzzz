@@ -348,7 +348,8 @@ function renderAdminLists() {
       <button class="ghost-button" type="button" data-delete-member="${escapeHtml(member.id)}">삭제</button>
     </div>`).join("") : `<p class="empty">등록된 멤버가 없습니다.</p>`;
 
-  els.sharedRallyAdminList.innerHTML = state.sharedRallies.length ? state.sharedRallies.map((rally) => `
+  const sharedRallies = getSortedRallies(state.sharedRallies);
+  els.sharedRallyAdminList.innerHTML = sharedRallies.length ? sharedRallies.map((rally) => `
     <div class="admin-row inline-edit-row rally-edit-row">
       <input aria-label="집결 이름" value="${escapeHtml(rally.name)}" data-rally-name="${escapeHtml(rally.id)}" />
       <input aria-label="집결 남은시간" value="${formatDuration(rally.rally_remaining_seconds)}" data-rally-remaining="${escapeHtml(rally.id)}" inputmode="numeric" />
@@ -475,7 +476,7 @@ async function adminFetch(url, options = {}) {
 }
 
 function calculateTiming(rally, member) {
-  const arrivalAt = new Date(new Date(rally.created_at).getTime() + (rally.rally_remaining_seconds + rally.enemy_march_seconds) * 1000);
+  const arrivalAt = new Date(getRallyArrivalTime(rally));
   const departAt = new Date(arrivalAt.getTime() - member.march_seconds * 1000);
   const secondsUntilDepart = Math.ceil((departAt.getTime() - Date.now()) / 1000);
   if (secondsUntilDepart < 0) {
@@ -533,14 +534,29 @@ function speakCountdown(seconds) {
 function getActiveRallies() {
   return [...state.sharedRallies, ...state.localRallies]
     .filter((rally) => {
-      const arrivalAt = new Date(new Date(rally.created_at).getTime() + (rally.rally_remaining_seconds + rally.enemy_march_seconds) * 1000);
-      return Date.now() - arrivalAt.getTime() < 10 * 60 * 1000;
+      return Date.now() - getRallyArrivalTime(rally) < 10 * 60 * 1000;
     })
-    .sort((a, b) => {
-      const aArrival = new Date(a.created_at).getTime() + (a.rally_remaining_seconds + a.enemy_march_seconds) * 1000;
-      const bArrival = new Date(b.created_at).getTime() + (b.rally_remaining_seconds + b.enemy_march_seconds) * 1000;
-      return aArrival - bArrival;
-    });
+    .sort(compareRallyDisplayOrder);
+}
+
+function getRallyArrivalTime(rally) {
+  return new Date(rally.created_at).getTime() + (rally.rally_remaining_seconds + rally.enemy_march_seconds) * 1000;
+}
+
+function getSortedRallies(rallies) {
+  return [...rallies].sort(compareRallyDisplayOrder);
+}
+
+function compareRallyDisplayOrder(a, b) {
+  if (a.local !== b.local) return a.local ? 1 : -1;
+  const nameDiff = String(a.name || "").localeCompare(String(b.name || ""), "ko-KR", {
+    numeric: true,
+    sensitivity: "base",
+  });
+  if (nameDiff !== 0) return nameDiff;
+  const arrivalDiff = getRallyArrivalTime(a) - getRallyArrivalTime(b);
+  if (arrivalDiff !== 0) return arrivalDiff;
+  return b.enemy_march_seconds - a.enemy_march_seconds;
 }
 
 function parseDuration(value) {
